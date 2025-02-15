@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aaryan</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+  <style>
+    /* Global Styles */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+    body {
+      height: 100vh;
+      overflow: hidden;
+    }
+    /* Background Elements */
+    .background {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+    }
+    #bgVideo {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    /* Spotify Button (bottom left) */
+    .spotify-btn {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      color: white;
+      text-decoration: none;
+      padding: 10px 20px;
+      border: 2px solid white;
+      border-radius: 25px;
+      background: rgba(255,255,255,0.2);
+      transition: background 0.3s;
+      z-index: 20;
+      cursor: pointer;
+    }
+    .spotify-btn:hover {
+      background: rgba(100,149,237,0.5);
+    }
+    /* Spotify Modal for Player */
+    #spotifyModal {
+      display: none;
+      position: fixed;
+      bottom: 80px;
+      left: 20px;
+      width: 350px;
+      background: #000;
+      border: 2px solid #fff;
+      border-radius: 10px;
+      z-index: 1000;
+      padding: 10px;
+      color: white;
+    }
+    #spotifyModal #closeModal {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      background: transparent;
+      border: none;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #trackInfo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    #trackInfo img {
+      width: 80px;
+      height: 80px;
+      border-radius: 5px;
+    }
+    /* Bottom Right Container – Mode Buttons & (optional) streak */
+    .bottom-right-container {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 20;
+      background: rgba(255,255,255,0.2);
+      border: 2px solid white;
+      border-radius: 25px;
+      padding: 10px 15px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .streak-container {
+      display: none; /* only visible in focus mode */
+      background: rgba(255,255,255,0.2);
+      border: 2px solid white;
+      border-radius: 25px;
+      padding: 8px 12px;
+      color: white;
+      font-size: 1rem;
+    }
+    .streak-container i {
+      margin-right: 5px;
+    }
+    /* Mode Buttons */
+    .mode-btn {
+      background: transparent;
+      border: none;
+      color: white;
+      cursor: pointer;
+      font-size: 1.5rem;
+      padding: 8px;
+      transition: background 0.3s;
+      border-radius: 50%;
+    }
+    .mode-btn:hover {
+      background: rgba(100,149,237,0.5);
+    }
+    /* Mode Content */
+    .mode-content {
+      display: none;
+      color: white;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      transition: background 0.3s;
+    }
+    .active-mode {
+      display: block;
+    }
+    /* Ambient Mode Specific */
+    #ambientMode {
+      position: static;
+      transform: none;
+    }
+    /* Ambient Mode Active Background */
+    #ambientMode.ambient-active {
+      background: rgba(100,149,237,0.1);
+    }
+    .ambient-top-right {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: rgba(0,0,0,0.3);
+      backdrop-filter: blur(5px);
+      padding: 10px 20px;
+      border-radius: 8px;
+      text-align: center;
+      color: white;
+      transition: background 0.3s;
+      z-index: 10;
+    }
+    .ambient-top-right.active {
+      background: rgba(100,149,237,0.5);
+    }
+    .ambient-timer {
+      font-size: 5rem;
+      margin: 10px 0;
+    }
+    .ambient-control-btn {
+      padding: 5px 10px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 1rem;
+      background: rgba(255,255,255,0.2);
+      color: white;
+      transition: background 0.3s;
+      margin: 5px;
+    }
+    .ambient-control-btn:hover {
+      background: rgba(100,149,237,0.5);
+    }
+    /* Home Mode Specific */
+    .time-display {
+      font-size: 4rem;
+      margin-bottom: 10px;
+    }
+    .date-display {
+      font-size: 1.5rem;
+    }
+    /* Focus Mode Specific */
+    .focus-text-container {
+      font-size: 16px;
+      font-weight: bold;
+      text-align: center;
+      margin: 20px 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    .edit-icon {
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .timer-buttons {
+      margin-top: 20px;
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+    .timer-btn {
+      padding: 8px 15px;
+      border: 2px solid white;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.2);
+      color: white;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.3s;
+    }
+    .timer-btn:hover {
+      background: rgba(100,149,237,0.5);
+    }
+    .timer-btn.active {
+      background: rgba(100,149,237,1);
+    }
+    #focus-timer {
+      font-size: 3.5rem;
+      margin: 20px 0;
+    }
+    .timer-controls {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+    }
+    .control-btn {
+      padding: 10px 25px;
+      border: none;
+      border-radius: 25px;
+      cursor: pointer;
+      font-size: 1.1rem;
+      background: rgba(255,255,255,0.2);
+      color: white;
+      transition: background 0.3s;
+    }
+    .control-btn:hover {
+      background: rgba(100,149,237,0.5);
+    }
+    /* Overlay for Editing Focus Text */
+    #focusEditOverlay {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0,0,0,0.8);
+      padding: 20px;
+      border-radius: 8px;
+      z-index: 999;
+      text-align: left;
+      width: 300px;
+    }
+    #focusEditOverlay h2 {
+      margin-bottom: 10px;
+    }
+    #focusEditInput {
+      width: 100%;
+      padding: 8px;
+      font-size: 14px;
+      color: white;
+      background: #333;
+      border: none;
+      outline: none;
+      margin-bottom: 10px;
+    }
+    #focusEditOverlay button {
+      padding: 6px 12px;
+      margin-right: 10px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      background: rgba(255,255,255,0.2);
+      color: white;
+      transition: background 0.3s;
+    }
+    #focusEditOverlay button:hover {
+      background: rgba(100,149,237,0.5);
+    }
+  </style>
+</head>
+<body>
+  <!-- Background Elements -->
+  <div class="background">
+    <video autoplay muted loop id="bgVideo">
+      <source src="https://app.flocus.com/resources/images/themes/f578c6b4e6af48261e67.mp4" type="video/mp4">
+    </video>
+    <img src="https://app.flocus.com/resources/images/themes/87223eadf66a7c8533bd.jpg" class="background" id="focusBg" style="display: none;">
+  </div>
+
+  <!-- Spotify Button (bottom left) -->
+  <button id="spotifyBtn" class="spotify-btn">Spotify</button>
+  
+  <!-- Spotify Modal for Player & Track Info -->
+  <div id="spotifyModal">
+    <button id="closeModal">X</button>
+    <div id="trackInfo">
+      <img id="albumArt" src="" alt="Album Art" />
+      <div>
+        <div id="trackName" style="font-weight:bold;"></div>
+        <div id="artistName" style="font-size:0.9em;"></div>
+      </div>
+    </div>
+    <iframe id="spotifyPlayer" src="" allow="encrypted-media"></iframe>
+  </div>
+
+  <!-- Bottom Right Container (Mode Buttons + Streak) -->
+  <div class="bottom-right-container">
+    <div id="streakFocus" class="streak-container">
+      <i class="fas fa-fire"></i> <span id="streakCount">0</span> Days
+    </div>
+    <button class="mode-btn" onclick="switchMode('ambient')">
+      <i class="fas fa-spa"></i>
+    </button>
+    <button class="mode-btn" onclick="switchMode('home')">
+      <i class="fas fa-home"></i>
+    </button>
+    <button class="mode-btn" onclick="switchMode('focus')">
+      <i class="fas fa-lightbulb"></i>
+    </button>
+  </div>
+
+  <!-- Ambient Mode -->
+  <div class="mode-content" id="ambientMode">
+    <div class="ambient-top-right" id="ambientControlArea">
+      <div class="ambient-header">Focus</div>
+      <div class="ambient-timer" id="ambientTimerDisplay">25:00</div>
+      <button class="ambient-control-btn" id="ambientStartBtn" onclick="startAmbientTimer()">Start</button>
+      <button class="ambient-control-btn" id="ambientStopBtn" onclick="stopAmbientTimer()" style="display:none;">Stop</button>
+    </div>
+  </div>
+
+  <!-- Home Mode -->
+  <div class="mode-content" id="homeMode">
+    <div class="time-display" id="currentTime"></div>
+    <div class="date-display" id="currentDate"></div>
+  </div>
+
+  <!-- Focus Mode -->
+  <div class="mode-content" id="focusMode">
+    <div class="focus-text-container">
+      <span id="focusText">What do you want to focus on?</span>
+      <i class="fas fa-pencil-alt edit-icon" onclick="editFocusText()"></i>
+    </div>
+    <div class="timer-buttons">
+      <button class="timer-btn" onclick="setTimer(25, this)">Focus (25m)</button>
+      <button class="timer-btn" onclick="setTimer(5, this)">Short Break (5m)</button>
+      <button class="timer-btn" onclick="setTimer(10, this)">Long Break (10m)</button>
+    </div>
+    <div id="focus-timer">25:00</div>
+    <div class="timer-controls">
+      <button class="control-btn" id="focusToggleBtn" onclick="toggleFocusTimer()">Start</button>
+      <button class="control-btn" onclick="resetFocusTimer()">Reset</button>
+      <button class="control-btn" onclick="popoutFocusTimer()">
+        <i class="fas fa-external-link-alt"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Overlay for Editing Focus Text -->
+  <div id="focusEditOverlay">
+    <h2>Edit Focus</h2>
+    <input type="text" id="focusEditInput" />
+    <br />
+    <button onclick="saveFocusText()">Save</button>
+    <button onclick="cancelFocusText()">Cancel</button>
+  </div>
+
+  <script>
+    // ----- Spotify OAuth & Integration -----
+    // Extract token from URL hash (if returning from Spotify login)
+    function getHashParams() {
+      var hashParams = {};
+      var e, r = /([^&;=]+)=?([^&;]*)/g,
+          q = window.location.hash.substring(1);
+      while (e = r.exec(q)) {
+         hashParams[e[1]] = decodeURIComponent(e[2]);
+      }
+      return hashParams;
+    }
+    var params = getHashParams();
+    if (params.access_token) {
+      localStorage.setItem('spotify_token', params.access_token);
+      window.location.hash = "";
+    }
+    function getSpotifyToken() {
+      return localStorage.getItem('spotify_token');
+    }
+    function loginSpotify() {
+      // Replace these with your actual Spotify developer credentials
+      var client_id = "YOUR_CLIENT_ID";
+      var redirect_uri = "YOUR_REDIRECT_URI"; // e.g., http://yourdomain.com
+      var scopes = "user-read-playback-state";
+      var url = "https://accounts.spotify.com/authorize?client_id=" + client_id +
+                "&redirect_uri=" + encodeURIComponent(redirect_uri) +
+                "&response_type=token&scope=" + encodeURIComponent(scopes);
+      window.location.href = url;
+    }
+    // Fetch currently playing track from Spotify and update the modal
+    function fetchCurrentTrack() {
+      var token = getSpotifyToken();
+      if (!token) return;
+      fetch("https://api.spotify.com/v1/me/player/currently-playing", {
+        headers: { "Authorization": "Bearer " + token }
+      })
+      .then(response => {
+        if(response.status === 204) {
+          throw new Error("No track is currently playing.");
+        }
+        return response.json();
+      })
+      .then(data => {
+        if(data && data.item) {
+          var track = data.item;
+          document.getElementById("trackName").textContent = track.name;
+          document.getElementById("artistName").textContent = track.artists.map(a => a.name).join(", ");
+          document.getElementById("albumArt").src = track.album.images[0].url;
+          document.getElementById("spotifyPlayer").src = "https://open.spotify.com/embed/track/" + track.id;
+          document.getElementById("spotifyModal").style.display = "block";
+        } else {
+          alert("No track information available.");
+        }
+      })
+      .catch(error => {
+        alert(error.message);
+      });
+    }
+    // Spotify button click handler
+    document.getElementById('spotifyBtn').addEventListener('click', function() {
+      var token = getSpotifyToken();
+      if (!token) {
+        // If not logged in, initiate login flow
+        loginSpotify();
+      } else {
+        // Already logged in; fetch and display current track
+        fetchCurrentTrack();
+      }
+    });
+    // Close the Spotify modal
+    document.getElementById('closeModal').addEventListener('click', function() {
+      document.getElementById('spotifyModal').style.display = 'none';
+    });
+
+    // ----- Mode Switching and Timer Logic -----
+    function switchMode(mode) {
+      document.querySelectorAll('.mode-content').forEach(el => el.classList.remove('active-mode'));
+      document.getElementById(mode + "Mode").classList.add('active-mode');
+      if(mode === 'focus'){
+        document.getElementById('streakFocus').style.display = 'block';
+        document.getElementById('bgVideo').style.display = 'none';
+        document.getElementById('focusBg').style.display = 'block';
+      } else {
+        document.getElementById('streakFocus').style.display = 'none';
+        document.getElementById('bgVideo').style.display = 'block';
+        document.getElementById('focusBg').style.display = 'none';
+      }
+    }
+    // Home Mode Clock
+    function updateTime() {
+      const options = { timeZone: 'Asia/Kolkata', hour12: true, hour: 'numeric', minute: 'numeric' };
+      const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+      document.getElementById('currentTime').textContent = new Date().toLocaleTimeString('en-IN', options);
+      document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-IN', dateOptions);
+    }
+    setInterval(updateTime, 1000);
+    updateTime();
+
+    // Ambient Mode Timer Logic
+    let ambientTimerDuration = 25 * 60;
+    let ambientTimeLeft = ambientTimerDuration;
+    let ambientTimerInterval = null;
+    function updateAmbientTimerDisplay() {
+      const minutes = Math.floor(ambientTimeLeft / 60);
+      const seconds = ambientTimeLeft % 60;
+      document.getElementById('ambientTimerDisplay').textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }
+    function startAmbientTimer() {
+      if(ambientTimerInterval) return;
+      ambientTimerInterval = setInterval(() => {
+        if(ambientTimeLeft <= 0) {
+          stopAmbientTimer();
+        } else {
+          ambientTimeLeft--;
+          updateAmbientTimerDisplay();
+        }
+      }, 1000);
+      document.getElementById('ambientStartBtn').style.display = 'none';
+      document.getElementById('ambientStopBtn').style.display = 'inline-block';
+      document.getElementById('ambientControlArea').classList.add('active');
+      document.getElementById('ambientMode').classList.add('ambient-active');
+    }
+    function stopAmbientTimer() {
+      if(ambientTimerInterval) {
+        clearInterval(ambientTimerInterval);
+        ambientTimerInterval = null;
+      }
+      ambientTimeLeft = ambientTimerDuration;
+      updateAmbientTimerDisplay();
+      document.getElementById('ambientStartBtn').style.display = 'inline-block';
+      document.getElementById('ambientStopBtn').style.display = 'none';
+      document.getElementById('ambientControlArea').classList.remove('active');
+      document.getElementById('ambientMode').classList.remove('ambient-active');
+    }
+
+    // Focus Mode Timer Logic
+    let timer = null;
+    let timeLeft = 1500;
+    function setTimer(minutes, button) {
+      timeLeft = minutes * 60;
+      updateDisplay();
+      document.getElementById('focusToggleBtn').textContent = 'Start';
+      clearInterval(timer);
+      timer = null;
+      document.querySelectorAll('.timer-btn').forEach(btn => btn.classList.remove('active'));
+      button.classList.add('active');
+    }
+    function toggleFocusTimer() {
+      if(timer) {
+        clearInterval(timer);
+        timer = null;
+        document.getElementById('focusToggleBtn').textContent = 'Start';
+      } else {
+        timer = setInterval(() => {
+          timeLeft--;
+          updateDisplay();
+          if(timeLeft <= 0) {
+            clearInterval(timer);
+            timer = null;
+            document.getElementById('focusToggleBtn').textContent = 'Start';
+          }
+        }, 1000);
+        document.getElementById('focusToggleBtn').textContent = 'Pause';
+      }
+    }
+    function resetFocusTimer() {
+      clearInterval(timer);
+      timer = null;
+      timeLeft = 1500;
+      updateDisplay();
+      document.getElementById('focusToggleBtn').textContent = 'Start';
+      document.querySelectorAll('.timer-btn').forEach(btn => btn.classList.remove('active'));
+    }
+    function updateDisplay() {
+      const minutes = Math.floor(timeLeft / 60);
+      const seconds = timeLeft % 60;
+      document.getElementById('focus-timer').textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }
+    function popoutFocusTimer() {
+      let pop = window.open("", "PopOut", "width=300,height=200");
+      pop.document.write("<html><head><title>Focus Timer</title></head><body style='display:flex;justify-content:center;align-items:center;height:100%;font-size:2em;color:black;'>" +
+        document.getElementById("focus-timer").textContent +
+        "</body></html>");
+    }
+
+    // Overlay for Editing Focus Text
+    function editFocusText() {
+      const currentFocus = document.getElementById('focusText').textContent.replace('?', '').trim();
+      document.getElementById('focusEditInput').value = currentFocus;
+      document.getElementById('focusEditOverlay').style.display = 'block';
+    }
+    function saveFocusText() {
+      let newText = document.getElementById('focusEditInput').value.trim();
+      if (!newText) { newText = 'What do you want to focus on'; }
+      if (!newText.endsWith('?')) { newText += '?'; }
+      document.getElementById('focusText').textContent = newText;
+      document.getElementById('focusEditOverlay').style.display = 'none';
+    }
+    function cancelFocusText() {
+      document.getElementById('focusEditOverlay').style.display = 'none';
+    }
+
+    // Initialize with Home Mode
+    switchMode('home');
+  </script>
+</body>
+</html>
